@@ -48,7 +48,7 @@ jobs:
 
       - name: Diff reports with knip-delta
         id: knip-delta
-        uses: YOUR_GITHUB_USERNAME/knip-delta@v0
+        uses: frontbond/knip-delta@v0
         with:
           base-report: ${{ runner.temp }}/base.json
           head-report: ${{ runner.temp }}/head.json

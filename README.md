@@ -79,7 +79,7 @@ The gist — run Knip against both the base and head commit of the PR, then
 hand both JSON files to the action:
 
 ```yaml
-- uses: YOUR_GITHUB_USERNAME/knip-delta@v0
+- uses: frontbond/knip-delta@v0
   id: knip-delta
   with:
     base-report: ${{ runner.temp }}/base.json
