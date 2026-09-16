@@ -1,0 +1,7 @@
+node_modules/
+*.log
+.DS_Store
+
+# dist/ is intentionally NOT ignored: this is a GitHub Action, and
+# `uses: owner/knip-delta@v0` checks out this repo as-is, with no build
+# step. CI (see .github/workflows/ci.yml) fails if dist/ drifts from src/.

@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - name: Dogfood - knip-delta has no unused code of its own
+        run: npm run knip
+      - name: Verify committed dist/ matches source
+        run: |
+          git diff --exit-code -- dist || {
+            echo "::error::dist/ is out of date. Run 'npm run build' and commit the result.";
+            exit 1;
+          }

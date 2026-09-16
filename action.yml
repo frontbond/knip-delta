@@ -1,0 +1,75 @@
+name: "knip-delta"
+description: "Diff two Knip JSON reports and report only the issues a change introduced or resolved."
+author: "knip-delta"
+branding:
+  icon: "scissors"
+  color: "purple"
+
+inputs:
+  base-report:
+    description: "Path to a `knip --reporter json` report for the base/target ref."
+    required: true
+  head-report:
+    description: "Path to a `knip --reporter json` report for the head/PR ref."
+    required: true
+  fail-on:
+    description: "'added' fails the step when new issues are introduced; 'never' never fails the step (useful if you want to gate on the output yourself)."
+    required: false
+    default: "added"
+
+outputs:
+  markdown-path:
+    description: "Path to a generated Markdown report, suitable as the body of a PR comment."
+    value: ${{ steps.run.outputs.markdown-path }}
+  json-path:
+    description: "Path to the full diff as JSON."
+    value: ${{ steps.run.outputs.json-path }}
+  has-new-issues:
+    description: "'true' if the head report contains issues absent from the base report."
+    value: ${{ steps.run.outputs.has-new-issues }}
+  new-issue-count:
+    description: "Number of issues present in head but not in base."
+    value: ${{ steps.run.outputs.new-issue-count }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        md_path="$RUNNER_TEMP/knip-delta-report.md"
+        json_path="$RUNNER_TEMP/knip-delta-diff.json"
+
+        node "$GITHUB_ACTION_PATH/dist/cli.js" diff \
+          --base "${{ inputs.base-report }}" \
+          --head "${{ inputs.head-report }}" \
+          --format markdown \
+          --fail-on never \
+          --out "$md_path"
+
+        node "$GITHUB_ACTION_PATH/dist/cli.js" diff \
+          --base "${{ inputs.base-report }}" \
+          --head "${{ inputs.head-report }}" \
+          --format json \
+          --fail-on never \
+          --out "$json_path"
+
+        added=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$json_path','utf8')).totals.added)")
+
+        echo "markdown-path=$md_path" >> "$GITHUB_OUTPUT"
+        echo "json-path=$json_path" >> "$GITHUB_OUTPUT"
+        echo "new-issue-count=$added" >> "$GITHUB_OUTPUT"
+
+        if [ "$added" -gt 0 ]; then
+          echo "has-new-issues=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has-new-issues=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - shell: bash
+      if: inputs.fail-on == 'added' && steps.run.outputs.has-new-issues == 'true'
+      run: |
+        echo "::error::knip-delta: ${{ steps.run.outputs.new-issue-count }} new Knip issue(s) introduced. See the job summary or PR comment for details."
+        exit 1

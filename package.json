@@ -1,0 +1,54 @@
+{
+  "name": "knip-delta",
+  "version": "0.1.0",
+  "description": "Diff two Knip JSON reports to show only the unused-code issues a change introduces or fixes — built for PR checks on codebases with an existing Knip backlog.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "knip-delta": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "action.yml"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsx src/cli.ts",
+    "knip": "knip",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "knip",
+    "diff",
+    "github-action",
+    "ci",
+    "unused-code",
+    "pull-request",
+    "dead-code"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USERNAME/knip-delta.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.3",
+    "knip": "^6.35.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}

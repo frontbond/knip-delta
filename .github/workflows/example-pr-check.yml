@@ -1,0 +1,64 @@
+# Example: drop this into a CONSUMER repo (the project that uses Knip) as
+# .github/workflows/knip.yml. It is not run by knip-delta's own CI — it's a
+# copy-paste template documented in the README.
+#
+# It runs Knip on both sides of a PR, diffs the two reports with knip-delta,
+# and comments on the PR with only what changed.
+name: Knip (PR delta)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  knip-delta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout head
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps (head)
+        run: npm ci
+
+      - name: Run Knip on head
+        # `|| true`: Knip exits non-zero when it finds issues, but we want
+        # the JSON report regardless — knip-delta is what decides pass/fail.
+        run: npx knip --reporter json > "$RUNNER_TEMP/head.json" || true
+
+      - name: Checkout base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base-checkout
+
+      - name: Install deps (base)
+        run: npm ci
+        working-directory: base-checkout
+
+      - name: Run Knip on base
+        run: npx knip --reporter json > "$RUNNER_TEMP/base.json" || true
+        working-directory: base-checkout
+
+      - name: Diff reports with knip-delta
+        id: knip-delta
+        uses: YOUR_GITHUB_USERNAME/knip-delta@v0
+        with:
+          base-report: ${{ runner.temp }}/base.json
+          head-report: ${{ runner.temp }}/head.json
+          fail-on: added
+
+      - name: Comment on PR
+        if: always()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-tag: knip-delta
+          edit-mode: replace
+          body-path: ${{ steps.knip-delta.outputs.markdown-path }}
