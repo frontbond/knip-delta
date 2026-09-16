@@ -98,6 +98,49 @@ describe("computeDiff (edge cases)", () => {
     expect(flat).toHaveLength(1);
     expect(flat[0]).toMatchObject({ file: "src/a.ts", category: "exports", identity: "x" });
   });
+
+  it("identifies `duplicates` entries by joined names, not a raw JSON dump", () => {
+    // Real shape from `knip --reporter json` for `export default Foo` where
+    // `Foo` is also a named export: each duplicate-group entry is an array
+    // of the aliased symbol descriptors, not a single {name, ...} object.
+    const report: KnipReport = {
+      issues: [
+        {
+          file: "src/components/emails/welcome-email.tsx",
+          duplicates: [
+            [
+              { name: "WelcomeEmail", line: 19, col: 17, pos: 253 },
+              { name: "default", line: 61, col: 16, pos: 2101 },
+            ],
+          ],
+        },
+      ],
+    };
+    const flat = flattenReport(report);
+    expect(flat).toHaveLength(1);
+    expect(flat[0]?.identity).toBe("WelcomeEmail|default");
+  });
+
+  it("resolving a duplicate-export issue shows up as removed, not a JSON blob", () => {
+    const withDuplicate: KnipReport = {
+      issues: [
+        {
+          file: "src/x.tsx",
+          duplicates: [
+            [
+              { name: "X", line: 1, col: 1, pos: 1 },
+              { name: "default", line: 10, col: 1, pos: 100 },
+            ],
+          ],
+        },
+      ],
+    };
+    const withoutDuplicate: KnipReport = { issues: [] };
+
+    const diff = computeDiff(withDuplicate, withoutDuplicate);
+    expect(diff.totals.removed).toBe(1);
+    expect(diff.removed[0]?.identity).toBe("X|default");
+  });
 });
 
 describe("formatters", () => {

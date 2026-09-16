@@ -1,6 +1,6 @@
 {
   "name": "knip-delta",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Diff two Knip JSON reports to show only the unused-code issues a change introduces or fixes — built for PR checks on codebases with an existing Knip backlog.",
   "type": "module",
   "main": "./dist/index.js",
@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.3",
-    "knip": "^6.35.1",
+    "knip": "^6.36.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^5.0.1"
